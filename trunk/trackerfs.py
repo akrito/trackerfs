@@ -146,9 +146,9 @@ Tracker filesystem
 
 """ + Fuse.fusage
     server = Trackerfs(version="%prog " + fuse.__version__,
-                       usage=usage,
-                       dash_s_do='setsingle')
-
+                       usage=usage)
+    #, dash_s_do='setsingle')
+    server.multithreaded = 0;
     server.parser.add_option(mountopt="query", metavar="TERM", default='kritikos', help="sets Tracker query [default: %default]")
 
     server.parse(values=server, errex=1)

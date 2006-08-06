@@ -1,0 +1,11 @@
+Add unique identifiers to hits with identical filenames: (2), (3), etc.
+
+Allow multiple queries, shown as subdirectories.
+-or-
+Have some sort of remote control where the user can issue a command to change queries, without unmounting and remounting the system.
+-or-
+Both
+
+Make Trackerfs safe for multi-threaded operation
+
+
