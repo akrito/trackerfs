@@ -69,7 +69,7 @@ class Trackerfs(Fuse):
     
     def __init__(self, *args, **kw):
         Fuse.__init__(self, *args, **kw)
-        self.query = 'katie'
+        #self.query = 'katie'
         self.tclient = Client()
 
     def hit_target(self, path, qstring):
@@ -149,7 +149,9 @@ Tracker filesystem
                        usage=usage,
                        dash_s_do='setsingle')
 
-    server.parse(errex=1)
+    server.parser.add_option(mountopt="query", metavar="TERM", default='kritikos', help="sets Tracker query [default: %default]")
+
+    server.parse(values=server, errex=1)
     server.main()
 
 if __name__ == '__main__':
