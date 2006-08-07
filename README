@@ -1,5 +1,6 @@
 Trackerfs shows hits from a Tracker query as symlinks.  Pretty simple.
 
+
 -=Requirements=-
 Trackerfs requires recent(cvs) versions of:
 * Tracker
@@ -14,16 +15,21 @@ If you use Ubuntu Dapper, these can be installed via apt-get
 
 I've heard that the DBus API has changed in recent versions, so cutting-edge DBus -may not work- with Trackerfs.
 
+
 -=Installation=-
 Copy trackerfs.py to somewhere in your path, e.g. /usr/local/bin
+
 
 -=Usage=-
 trackerfs.py mountpoint -o query=search_term
 
 For instance, I do "trackerfs.py ~/search -o query=katie" when I want to find all the pictures of my wife :)
 
+
 -=Bugs=-
-Assuredly.  Trackerfs doesn't do much error-checking.  Hits to files with the same filename result in hits named exactly the same thing.
+** trackerfs.log is created in the directory where trackerfs.py is run.  I'll fix it, I promise.
+
+Trackerfs doesn't do much error-checking.  Hits to files with the same filename result in hits named exactly the same thing.
 
 -=Todo=-
 See TODO
