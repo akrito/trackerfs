@@ -27,9 +27,9 @@ if getattr(dbus, 'version', (0,0,0)) >= (0,41,0):
 # Set up logging
 ###
 log = logging.getLogger("trackerfs")
-log.setLevel(logging.DEBUG)
-fh = logging.FileHandler("trackerfs.log")
-fh.setLevel(logging.DEBUG)
+log.setLevel(logging.ERROR)
+fh = logging.StreamHandler()
+fh.setLevel(logging.ERROR)
 #create formatter
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 fh.setFormatter(formatter)
@@ -88,7 +88,6 @@ class Client:
             self.cached_hits = hits
             log.debug("performed search")
             return hits
-
 
 class Trackerfs(Fuse):
     

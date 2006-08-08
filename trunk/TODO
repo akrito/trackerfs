@@ -1,7 +1,5 @@
 Fix vfstat return values (fuse API changed)
 
-Add unique identifiers to hits with identical filenames: (2), (3), etc.
-
 Allow multiple queries, shown as subdirectories.
 -or-
 Have some sort of remote control where the user can issue a command to change queries, without unmounting and remounting the system.
