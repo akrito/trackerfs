@@ -18,6 +18,7 @@ from stat import *
 import string
 import dbus
 import logging
+import time
 
 if getattr(dbus, 'version', (0,0,0)) >= (0,41,0):
     import dbus.glib
@@ -56,25 +57,49 @@ class Client:
     """
     def __init__(self):
     
-
         self._bus = dbus.SessionBus()
         self._obj = self._bus.get_object('org.freedesktop.Tracker', '/org/freedesktop/tracker')
         self._iface = dbus.Interface(self._obj, 'org.freedesktop.Tracker.Search')
+        self.cached_time = 0
+        self.cached_string = ''
+        self.cached_hits = []
     
     def query(self, qstring):
         log.debug("preparing query with %s",qstring)
-        return self._iface.Text(-1, "Files", qstring, 0, 512, False)
+        current_time = time.time()
+        if current_time - self.cached_time < 10 and qstring == self.cached_string:
+            log.debug("cache hit")
+            return self.cached_hits
+        else:
+            results = self._iface.Text(-1, "Files", qstring, 0, 512, False)
+            
+            hits = []
+            for result in results:
+                shortname = result[(string.rindex(result,'/')+1):].encode()
+                uniq = 0
+                possible_name = shortname
+                while filter(lambda x: x['name'] == possible_name, hits):
+                    uniq += 1
+                    possible_name = shortname + ' (' + str(uniq) + ')'
+                hits.append({'name': possible_name, 'link': result})
+                    
+            self.cached_time = current_time
+            self.cached_string = qstring
+            self.cached_hits = hits
+            log.debug("performed search")
+            return hits
+
 
 class Trackerfs(Fuse):
     
     def __init__(self, *args, **kw):
         Fuse.__init__(self, *args, **kw)
-        #self.query = 'katie'
         self.tclient = Client()
 
     def hit_target(self, path, qstring):
         hits = self.tclient.query(qstring)
-        matches = [x for x in hits if x.endswith(path)]
+
+        matches = [x['link'] for x in hits if x['name'] == path[1:]]
         if matches != []:
             return matches[0].encode()
         else:
@@ -82,12 +107,9 @@ class Trackerfs(Fuse):
 
     def get_hits(self, qstring):
         log.debug("get_hits: %s", qstring)
-        matches = self.tclient.query(qstring)
-        log.debug("done")
-
-        # return the filenames, which occur after the last slash,
-        # and convert from unicode
-        return [x[(string.rindex(x,'/')+1):].encode() for x in matches]
+        hits = self.tclient.query(qstring)
+        
+        return [x['name'] for x in hits]
         
     def getattr(self, path):
 
@@ -146,8 +168,7 @@ Tracker filesystem
 
 """ + Fuse.fusage
     server = Trackerfs(version="%prog " + fuse.__version__,
-                       usage=usage)
-    #, dash_s_do='setsingle')
+                       usage=usage, dash_s_do='setsingle')
     server.multithreaded = 0;
     server.parser.add_option(mountopt="query", metavar="TERM", default='kritikos', help="sets Tracker query [default: %default]")
 
