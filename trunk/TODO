@@ -1,3 +1,5 @@
+Fix vfstat return values (fuse API changed)
+
 Add unique identifiers to hits with identical filenames: (2), (3), etc.
 
 Allow multiple queries, shown as subdirectories.
