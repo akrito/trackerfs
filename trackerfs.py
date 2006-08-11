@@ -94,29 +94,41 @@ class Trackerfs(Fuse):
     def __init__(self, *args, **kw):
         Fuse.__init__(self, *args, **kw)
         self.tclient = Client()
+        self.dirs = {}
 
-    def hit_target(self, path, qstring):
-        hits = self.tclient.query(qstring)
+    def hit_target(self, path):
+        """
+        path should be in the form of /dir/link
+            but it won't always be
+        FIXME: sloppy checking for this
+        """
+        try:
+            qstring = path[1:path.rindex('/')]
+            filename = path[path.rindex('/')+1:]
+            hits = self.tclient.query(qstring)
+        except:
+            hits = []
 
-        matches = [x['link'] for x in hits if x['name'] == path[1:]]
+        matches = [x['link'] for x in hits if x['name'] == filename]
         if matches != []:
             return matches[0].encode()
         else:
             return None
 
     def get_hits(self, qstring):
+        """
+        TODO: if it's not needed anywhere else, fold into readdir
+        """
         log.debug("get_hits: %s", qstring)
         hits = self.tclient.query(qstring)
-        
         return [x['name'] for x in hits]
         
     def getattr(self, path):
-
         st = MyStat()
-        if path == '/':
+        if path == '/' or self.dirs.has_key(path[1:]):
             st.st_mode = S_IFDIR | 0755
             st.st_nlin = 2
-        elif self.hit_target(path, self.query) != None:
+        elif self.hit_target(path) != None:
             st.st_mode = S_IFLNK|S_IRWXU|S_IRWXG|S_IRWXO
             st.st_nlink = 1
             st.st_size = 0
@@ -125,7 +137,7 @@ class Trackerfs(Fuse):
         return st
    
     def readlink(self, path):
-        target = self.hit_target(path, self.query)
+        target = self.hit_target(path)
         if target != None:
             return target
         else:
@@ -134,11 +146,36 @@ class Trackerfs(Fuse):
             raise e
     
     def readdir(self, path, offset):
-        for r in  '.', '..':
-            yield fuse.Direntry(r)
-        for r in self.get_hits(self.query):
-            yield fuse.Direntry(r)
-
+        """
+        if path is /, return all dirs
+        if path is /dir, and "dir" exists, return hits for the "dir" query
+        """
+        if path == '/':
+            for r in  '.', '..':
+                yield fuse.Direntry(r)
+            for r in self.dirs:
+                yield fuse.Direntry(r)
+        elif self.dirs.has_key(path[1:]):
+            for r in '.', '..':
+                yield fuse.Direntry(r)
+            for r in self.get_hits(path[1:]):
+                yield fuse.Direntry(r)
+    
+    def mkdir(self, path, mode):
+        new_dir = path[1:]
+        if (self.dirs.has_key(new_dir) == False) and (len(new_dir) > 0) and (new_dir.find('/') == -1):
+            self.dirs[new_dir] = new_dir
+                
+    def rename(self, path, path1):
+        new_dir = path1[1:]
+        old_dir = path[1:]
+        if (self.dirs.has_key(new_dir) == False) and (len(new_dir) > 0) and (new_dir.find('/') == -1):
+            try:
+                del self.dirs[old_dir]
+                self.dirs[new_dir] = new_dir
+            except:
+                return # FIXME: return an error!
+   
     def statfs(self):
         """
         Should return a tuple with the following 6 elements:
@@ -152,6 +189,7 @@ class Trackerfs(Fuse):
         Feel free to set any of the above values to 0, which tells
         the kernel that the info is not available.
         """
+        #FIXME: Update for the new python-fuse API
         block_size = 0
         blocks = 0
         blocks_free = 0
@@ -169,7 +207,7 @@ Tracker filesystem
     server = Trackerfs(version="%prog " + fuse.__version__,
                        usage=usage, dash_s_do='setsingle')
     server.multithreaded = 0;
-    server.parser.add_option(mountopt="query", metavar="TERM", default='kritikos', help="sets Tracker query [default: %default]")
+    # server.parser.add_option(mountopt="query", metavar="TERM", default='kritikos', help="sets Tracker query [default: %default]")
 
     server.parse(values=server, errex=1)
     server.main()

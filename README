@@ -1,6 +1,5 @@
 Trackerfs shows hits from a Tracker query as symlinks.  Pretty simple.
 
-
 -=Requirements=-
 Trackerfs requires recent(cvs) versions of:
 * Tracker
@@ -21,15 +20,24 @@ Copy trackerfs.py to somewhere in your path, e.g. /usr/local/bin
 
 
 -=Usage=-
-trackerfs.py mountpoint -o query=search_term
+trackerfs.py mountpoint
 
-For instance, I do "trackerfs.py ~/search -o query=katie" when I want to find all the pictures of my wife :)
+To search, create a directory in the Trackerfs root.  It will be populated with symlinks from the tracker search for "directory_name".  You cannot delete directories, but you *can* rename them when you want to search for something else.  Create as many directories as you wish.
 
 
 -=Bugs=-
-** trackerfs.log is created in the directory where trackerfs.py is run.  I'll fix it, I promise.
-
-Trackerfs doesn't do much error-checking.  Hits to files with the same filename result in hits named exactly the same thing.
+Trackerfs doesn't do much error-checking.
+"Invalid argument" when ls'ing a directory with no hits.
 
 -=Todo=-
-See TODO
+Allow special directories of the form "tag:query", which cause trackerfs to search for files tagged with "query".
+Also, allow other "xxx:query", where trackerfs will search for all files with metadata type "xxx" set to "query"
+
+Fix vfstat return values (fuse API changed)
+
+Save directories for next time
+
+Make Trackerfs safe for multi-threaded operation
+
+--
+(c) 2006 Alex Kritikos (alex dot kritikos at gmail dot com)
